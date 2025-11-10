@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grandma's Apple Harvest</title>
+    <style>
+        canvas {
+            border: 2px solid #000;
+            display: block;
+            margin: 0 auto;
+            background: #87CEEB;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let score = 0;
+        let missedApples = 0;
+        const maxMissedApples = 5;
+        
+        const grandma = {
+            x: canvas.width / 2,
+            y: canvas.height - 80,
+            width: 60,
+            height: 80,
+            speed: 5
+        };
+
+        const apples = [];
+        
+        function createApple() {
+            apples.push({
+                x: Math.random() * (canvas.width - 20),
+                y: 0,
+                width: 20,
+                height: 20,
+                speed: 2 + Math.random() * 2
+            });
+        }
+        
+        function drawGrandma() {
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(grandma.x, grandma.y, grandma.width, grandma.height);
+        }
+        
+        function drawApples() {
+            ctx.fillStyle = 'red';
+            apples.forEach(apple => {
+                ctx.fillRect(apple.x, apple.y, apple.width, apple.height);
+            });
+        }
+        
+        function updateGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Move grandma
+            if (keys.ArrowLeft && grandma.x > 0) grandma.x -= grandma.speed;
+            if (keys.ArrowRight && grandma.x < canvas.width - grandma.width) grandma.x += grandma.speed;
+            
+            // Update apples
+            for (let i = apples.length - 1; i >= 0; i--) {
+                apples[i].y += apples[i].speed;
+                
+                // Check collision with grandma
+                if (collision(apples[i], grandma)) {
+                    apples.splice(i, 1);
+                    score++;
+                    continue;
+                }
+                
+                // Check if apple is missed
+                if (apples[i].y > canvas.height) {
+                    apples.splice(i, 1);
+                    missedApples++;
+                }
+            }
+            
+            // Game over check
+            if (missedApples >= maxMissedApples) {
+                ctx.fillStyle = 'black';
+                ctx.font = '48px Arial';
+                ctx.fillText('Game Over!', canvas.width/2 - 100, canvas.height/2);
+                return;
+            }
+            
+            // Draw everything
+            drawGrandma();
+            drawApples();
+            
+            // Draw score
+            ctx.fillStyle = 'black';
+            ctx.font = '24px Arial';
+            ctx.fillText(`Score: ${score} Missed: ${missedApples}`, 10, 30);
+            
+            requestAnimationFrame(updateGame);
+        }
+        
+        function collision(apple, grandma) {
+            return apple.x < grandma.x + grandma.width &&
+                   apple.x + apple.width > grandma.x &&
+                   apple.y < grandma.y + grandma.height &&
+                   apple.y + apple.height > grandma.y;
+        }
+        
+        const keys = {};
+        window.addEventListener('keydown', e => keys[e.key] = true);
+        window.addEventListener('keyup', e => keys[e.key] = false);
+        
+        // Create new apple every second
+        setInterval(createApple, 1000);
+        
+        // Start the game
+        updateGame();
+    </script>
+</body>
+</html>
