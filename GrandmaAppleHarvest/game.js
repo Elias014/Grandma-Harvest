@@ -1,4 +1,4 @@
-let scene, camera, renderer, grandma, apples = [];
+let scene, camera, renderer, grandma, apples = [], stones = [];
 let score = 0;
 
 function createGrandma() {
@@ -98,6 +98,21 @@ function createApple() {
     apples.push(apple);
 }
 
+function createStone() {
+    const stoneGeometry = new THREE.DodecahedronGeometry(0.5);
+    const stoneMaterial = new THREE.MeshPhongMaterial({ 
+        color: 0x666666,
+        roughness: 0.8,
+        metalness: 0.2
+    });
+    const stone = new THREE.Mesh(stoneGeometry, stoneMaterial);
+    stone.position.x = Math.random() * 20 - 10;
+    stone.position.y = 10;
+    stone.position.z = 0;
+    scene.add(stone);
+    stones.push(stone);
+}
+
 function onMouseMove(event) {
     const x = (event.clientX / window.innerWidth) * 20 - 10;
     grandma.position.x = x;
@@ -110,11 +125,11 @@ function onTouchMove(event) {
 }
 
 function updateGame() {
-    // Move apples
+    // Move and check apples
     apples.forEach((apple, index) => {
         apple.position.y -= 0.1;
+        apple.rotation.x += 0.02;
         
-        // Update collision detection for grandma
         if (apple.position.y <= grandma.position.y + 3 &&
             apple.position.y >= grandma.position.y &&
             Math.abs(apple.position.x - grandma.position.x) < 1.5) {
@@ -124,16 +139,50 @@ function updateGame() {
             document.getElementById('scoreValue').textContent = score;
         }
         
-        // Remove apples that fell
         if (apple.position.y < -6) {
             scene.remove(apple);
             apples.splice(index, 1);
         }
     });
+
+    // Move and check stones
+    stones.forEach((stone, index) => {
+        stone.position.y -= 0.15; // Stones fall slightly faster
+        stone.rotation.x += 0.05;
+        stone.rotation.y += 0.05;
+        
+        if (stone.position.y <= grandma.position.y + 3 &&
+            stone.position.y >= grandma.position.y &&
+            Math.abs(stone.position.x - grandma.position.x) < 1.5) {
+            scene.remove(stone);
+            stones.splice(index, 1);
+            score--; // Decrease score when hitting stones
+            document.getElementById('scoreValue').textContent = score;
+            
+            // Flash effect when hit by stone
+            grandma.traverse((child) => {
+                if (child.isMesh) {
+                    const originalColor = child.material.color.getHex();
+                    child.material.color.setHex(0xff0000);
+                    setTimeout(() => {
+                        child.material.color.setHex(originalColor);
+                    }, 200);
+                }
+            });
+        }
+        
+        if (stone.position.y < -6) {
+            scene.remove(stone);
+            stones.splice(index, 1);
+        }
+    });
     
-    // Create new apples randomly
+    // Create new objects randomly
     if (Math.random() < 0.02) {
         createApple();
+    }
+    if (Math.random() < 0.01) { // Stones appear less frequently
+        createStone();
     }
     
     // Add subtle animation to grandma
