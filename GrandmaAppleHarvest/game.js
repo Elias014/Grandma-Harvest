@@ -1,5 +1,54 @@
-let scene, camera, renderer, basket, apples = [];
+let scene, camera, renderer, grandma, apples = [];
 let score = 0;
+
+function createGrandma() {
+    // Create grandma group
+    grandma = new THREE.Group();
+    
+    // Body (dress)
+    const dressGeometry = new THREE.ConeGeometry(1, 2, 8);
+    const dressMaterial = new THREE.MeshPhongMaterial({ color: 0x800080 }); // Purple dress
+    const dress = new THREE.Mesh(dressGeometry, dressMaterial);
+    dress.position.y = 1;
+    
+    // Head
+    const headGeometry = new THREE.SphereGeometry(0.5);
+    const headMaterial = new THREE.MeshPhongMaterial({ color: 0xFFE4B5 }); // Skin color
+    const head = new THREE.Mesh(headGeometry, headMaterial);
+    head.position.y = 2.5;
+    
+    // Hair (grey bun)
+    const hairGeometry = new THREE.SphereGeometry(0.4);
+    const hairMaterial = new THREE.MeshPhongMaterial({ color: 0x808080 }); // Grey hair
+    const hair = new THREE.Mesh(hairGeometry, hairMaterial);
+    hair.position.y = 2.7;
+    hair.position.z = -0.2;
+    
+    // Arms
+    const armGeometry = new THREE.CylinderGeometry(0.2, 0.2, 1.5);
+    const armMaterial = new THREE.MeshPhongMaterial({ color: 0x800080 });
+    
+    const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+    leftArm.position.set(-1, 1.8, 0);
+    leftArm.rotation.z = Math.PI / 3;
+    
+    const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+    rightArm.position.set(1, 1.8, 0);
+    rightArm.rotation.z = -Math.PI / 3;
+    
+    // Add all parts to grandma group
+    grandma.add(dress);
+    grandma.add(head);
+    grandma.add(hair);
+    grandma.add(leftArm);
+    grandma.add(rightArm);
+    
+    // Position grandma
+    grandma.position.y = -4;
+    
+    scene.add(grandma);
+    return grandma;
+}
 
 function init() {
     // Create scene
@@ -15,12 +64,8 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById('game-container').appendChild(renderer.domElement);
     
-    // Create basket
-    const basketGeometry = new THREE.BoxGeometry(2, 1, 1);
-    const basketMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
-    basket = new THREE.Mesh(basketGeometry, basketMaterial);
-    basket.position.y = -5;
-    scene.add(basket);
+    // Replace basket creation with grandma
+    grandma = createGrandma();
     
     // Add lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -55,13 +100,13 @@ function createApple() {
 
 function onMouseMove(event) {
     const x = (event.clientX / window.innerWidth) * 20 - 10;
-    basket.position.x = x;
+    grandma.position.x = x;
 }
 
 function onTouchMove(event) {
     event.preventDefault();
     const x = (event.touches[0].clientX / window.innerWidth) * 20 - 10;
-    basket.position.x = x;
+    grandma.position.x = x;
 }
 
 function updateGame() {
@@ -69,9 +114,10 @@ function updateGame() {
     apples.forEach((apple, index) => {
         apple.position.y -= 0.1;
         
-        // Check collision with basket
-        if (apple.position.y <= basket.position.y + 1 &&
-            Math.abs(apple.position.x - basket.position.x) < 1) {
+        // Update collision detection for grandma
+        if (apple.position.y <= grandma.position.y + 3 &&
+            apple.position.y >= grandma.position.y &&
+            Math.abs(apple.position.x - grandma.position.x) < 1.5) {
             scene.remove(apple);
             apples.splice(index, 1);
             score++;
@@ -89,6 +135,9 @@ function updateGame() {
     if (Math.random() < 0.02) {
         createApple();
     }
+    
+    // Add subtle animation to grandma
+    grandma.rotation.y = Math.sin(Date.now() * 0.002) * 0.1;
 }
 
 function animate() {
